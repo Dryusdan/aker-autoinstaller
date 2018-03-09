@@ -1,0 +1,62 @@
+#!/bin/bash
+
+options=("Add usergroup" "Delete usergroup" "List usergroups" "exit")
+width=25
+cols=3
+
+for ((i=0;i<${#options[@]};i++)); do
+  string="$(($i+1))) ${options[$i]}"
+  printf "%s" "$string"
+  printf "%$(($width-${#string}))s" " "
+  [[ $(((i+1)%$cols)) -eq 0 ]] && echo
+done
+
+while true; do
+  echo
+  read -p '#? ' opt
+  case $opt in
+    1)
+                echo "${options[$opt-1]}"
+        echo "What is the name of the group to add?"
+        read name
+        if grep -q $name "/etc/aker/conf/usergroups" ; then
+            echo "The group already exists"
+        else
+            sed -i -e 's/$/, "'${name}'"/g' /etc/aker/conf/usergroups
+                        echo "Group ADD"
+        fi
+        ;;
+    2)
+                echo "${options[$opt-1]}"
+                echo -e "\033[31m"
+                echo "#############################################"
+                echo "#                                           #"
+                echo "#                                           #"
+                echo "#                  WARNING                  #"
+                echo "#                                           #"
+                echo "#       Deleting a group must be done       #"
+                echo "#  after deleting all users in that group.  #"
+                echo "#                                           #"
+                echo "#                                           #"
+                echo "#############################################"
+                echo -e "\033[0m"
+                echo "What is the name of the group to delete?"
+        read name
+        if grep -q $name "/etc/aker/conf/usergroups" ; then
+            sed -i -e 's/, '${name}'//g' /etc/aker/conf/usergroups
+                        echo "Group delete"
+        else
+            echo "The group does not exist"
+        fi
+                ;;
+
+        3)
+                echo "${options[$opt-1]}"
+                cat /etc/aker/conf/usergroups | sed -e 's/, /\n/g'
+                ;;
+    4)
+                echo "Bye bye!"
+                break
+                ;;
+  esac
+done

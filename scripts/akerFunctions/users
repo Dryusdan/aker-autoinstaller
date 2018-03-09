@@ -1,0 +1,74 @@
+#!/bin/bash
+
+addUser(){
+    if [ "$#" -eq 5 ]; then
+        name=$1
+        group=$2
+        pubkey="$3 $4 $5"
+		if [ -f /etc/aker/conf/users/$name ]
+		then
+			echo "User already exists"
+		else
+			useradd -m $name
+			mkdir /home/$name/.ssh
+			touch /home/$name/.ssh/authorized_keys
+			echo $pubkey > /home/$name/.ssh/authorized_keys
+			cp /etc/aker/default/users.tpl /etc/aker/conf/users/$name
+			ssh bastionssh@192.168.1.25 "sudo /usr/sbin/useradd -m $name"
+			ssh bastionssh@192.168.1.25 "mkdir -p /home/bastionssh/$name/.ssh"
+			sed -i -e "s/<username>/${name}/" \
+				   -e "s/<groups>/${group}/" /etc/aker/conf/users/$name
+			#Penser a récupérer l'IP de l'autre serveur quelque part
+			ssh-keygen -b 4096 -t rsa -N '' -f /home/$name/.ssh/id_rsa
+			chown -R $name:$name /home/$name/.ssh/
+			scp -r /home/$name/.ssh/* bastionssh@192.168.1.25:/home/bastionssh/$name/.ssh
+			ssh bastionssh@192.168.1.25 "sudo mv /home/bastionssh/$name/.ssh/ /home/$name/"
+			ssh bastionssh@192.168.1.25 "sudo chown -R $name:$name /home/$name/"
+			ssh bastionssh@192.168.1.25 "sudo chown -R $name:$name /home/$name/.ssh"
+		fi
+    else
+		help
+    fi
+    
+}
+
+delUser() {
+	if [ "$#" -eq 2 ]; then
+		name=$2
+	else
+		help
+    fi
+	echo -e "\033[31m"
+    echo "#############################################"
+    echo "#                                           #"
+    echo "#                                           #"
+    echo "#                  WARNING                  #"
+    echo "#                                           #"
+    echo "#         Deleting a user will prevent      #"
+    echo "#          them from accessing Aker.        #"
+    echo "#                                           #"
+    echo "#                                           #"
+    echo "#############################################"
+    echo -e "\033[0m"
+    echo "What is the name of the user to be deleted?"
+    read name
+    if [ -f /etc/aker/conf/users/$name ]
+    then
+		rm -f /etc/aker/conf/users/$name
+    else
+        echo "User does not exist"
+    fi
+}
+
+help(){
+	echo "akerUser -[a|d|l|s|h] 
+	akerUser -a "[username]" "[group]" "[sshPubKey]"
+	akerUser -d [username]
+
+	general options: 
+		-a				add user of bastion
+		-d				delete user of bastion
+		-l				list users of bastion (featured)
+		-s				add ssh key of a specific user (featured)
+		-h 				display help"
+}

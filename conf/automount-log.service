@@ -1,0 +1,14 @@
+[Unit]
+Description=Glustermounting
+Requires=glusterfs-server.service
+
+[Service]
+Type=simple
+RemainAfterExit=true
+ExecStartPre=/usr/sbin/gluster volume start akerLog force
+ExecStart=/bin/mount <REAL_IP>:/akerLog /var/log/aker  -t glusterfs
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

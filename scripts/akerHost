@@ -1,0 +1,111 @@
+#!/bin/bash
+
+options=("Add host" "Delete host" "List hosts" "exit")
+width=25
+cols=3
+
+for ((i=0;i<${#options[@]};i++)); do
+  string="$(($i+1))) ${options[$i]}"
+  printf "%s" "$string"
+  printf "%$(($width-${#string}))s" " "
+  [[ $(((i+1)%$cols)) -eq 0 ]] && echo
+done
+
+if [ -n "$1" ]; then
+        if [ "$1" == "add" ]; then
+        echo "$#";
+                if [ "$#" -eq 4 ]; then
+                        name=$2
+                        group=$3
+                        hostgroup=$4
+                else
+                        echo "here"
+                fi
+        fi
+fi
+
+while true; do
+  echo
+  if [ -n "$1" ]; then
+        if [ "$1" == "add" ]; then
+          opt=1
+        else
+          if [ "$1" == "del" ]; then
+            opt=2
+          else
+            if [ "$1" == "list" ]; then
+              opt=3
+            fi
+          fi
+        fi
+  else
+        read -p '#? ' opt
+  fi
+
+  case $opt in
+    1)
+                echo "${options[$opt-1]}"
+				if [ -n "$name" ]; then
+                        echo "The host's dns address is : $name"
+                else
+                        echo "What is the DNS name of the host to add?"
+                        read name
+                fi
+                if [ -f /etc/aker/conf/hosts/$name ]
+                then
+                   echo "The host already exists"
+                else
+						if [ -n "$group" ]; then
+							echo "the group (s) authorized to access the host is/are: $group"
+						else
+								echo "Which group can access this host? (separate groups with commas)"
+								read group
+						fi
+						if [ -n "$hostgroup" ]; then
+							echo "The host belongs to the group: $hostgroup"
+						else
+								echo "Which group this host belongs to"
+								read hostgroup
+						fi
+                        cp /etc/aker/default/hosts.tpl /etc/aker/conf/hosts/$name
+                        sed -i -e "s/<hostname>/${name}/" \
+                               -e "s/<hostgroups>/${hostgroup}/" \
+                               -e "s/<usergroups>/${group}/" /etc/aker/conf/hosts/$name
+
+                fi
+				break;
+				;;
+    2)
+                echo "${options[$opt-1]}"
+                echo -e "\033[31m"
+                echo "#############################################"
+                echo "#                                           #"
+                echo "#                                           #"
+                echo "#                  WARNING                  #"
+                echo "#                                           #"
+                echo "#              Deleting a host              #"
+                echo "#       will no longer list it in Aker      #"
+                echo "#                                           #"
+                echo "#                                           #"
+                echo "#############################################"
+                echo -e "\033[0m"
+                echo "Quel est l'hôte que vous souhaitez supprimer ?"
+        read name
+        if [ -f /etc/aker/conf/hosts/$name ]
+                then
+            rm -f /etc/aker/conf/hosts/$name
+        else
+            echo "The host doesn't exist"
+        fi
+                ;;
+
+        3)
+                echo "${options[$opt-1]}"
+                echo "This option is not yet available"
+                ;;
+    5)
+                echo "Bye bye!"
+                break
+                ;;
+  esac
+done

@@ -1,0 +1,48 @@
+#!/bin/bash
+cp /etc/aker/hosts.json /etc/aker/hosts.json.back
+echo "Creating a restoration file [/etc/aker/hosts.json.back]"
+users=''
+hosts=''
+usergroups=$(cat /etc/aker/conf/usergroups)
+i=0
+for user in `find /etc/aker/conf/users/ -name '*'  -type f`
+do
+        if [ ${i} -eq 0 ]
+        then
+                i=$((i+1))
+                users="$users `cat $user`"
+        else
+                users="$users, `cat $user`"
+        fi
+done
+x=0
+for host in `find /etc/aker/conf/hosts/ -name '*'  -type f`
+do
+        if [ ${x} -eq 0 ]
+        then
+                x=$((x+1))
+                hosts="$hosts `cat $host`"
+        else
+                hosts="$hosts, `cat $host`"
+        fi
+done
+
+#cp -f /etc/aker/default/hosts.json.tpl /etc/aker/hosts.json
+
+#echo $usergroups
+#echo $users
+#echo $hosts
+
+echo "{" > /etc/aker/hosts.json
+echo "\"usergroups\": [" >> /etc/aker/hosts.json
+echo $usergroups >> /etc/aker/hosts.json
+echo "]," >> /etc/aker/hosts.json
+echo "\"users\": [" >> /etc/aker/hosts.json
+echo $users >> /etc/aker/hosts.json
+echo "]," >> /etc/aker/hosts.json
+echo "\"hosts\": [" >> /etc/aker/hosts.json
+echo $hosts >> /etc/aker/hosts.json
+echo "]" >> /etc/aker/hosts.json
+echo "}" >> /etc/aker/hosts.json
+redis-cli flushall
+echo "[Aker] reload complete"

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ "$#" -eq 1 ]; then
+        while read line
+        do
+                string=$line
+                pattern='environment="SSH_USER='
+                sshKey=${string//$pattern/}
+                ssh=$(echo $sshKey | sed 's![a-zA-Z_]*\"!!g' )
+                name=${sshKey//$ssh/}
+                name=${name//"\""/}
+                akerUser add "$name" "sysadmin" "$ssh"
+        done < $1
+fi

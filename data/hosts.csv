@@ -1,0 +1,5 @@
+host1;group1;hostgroup1
+host2;group2;hostgroup1
+host3;group1;hostgroup2
+host4;group2;hostgroup2
+
